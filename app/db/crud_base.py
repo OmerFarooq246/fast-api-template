@@ -25,6 +25,24 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             await db.rollback()
             print(f"error in {self.model.__name__} get: {e}")
             raise CRUDException(self.model.__name__, f"error in get with id: {id}")
+        
+        
+    async def get_by_attribute(self, db: AsyncSession, attr: str, value: any) -> Optional[ModelType]:
+        try:
+            column = getattr(self.model, attr, None)
+            if column is None:
+                raise CRUDException(self.model.__name__, f"Attribute '{attr}' not found")
+
+            result = await db.execute(select(self.model).where(column == value))
+            obj = result.scalars().first()
+            if obj is None:
+                raise CRUDException(self.model.__name__, f"{self.model.__name__} with {attr}={value} not found", 404)
+            return obj
+        except Exception as e:
+            await db.rollback()
+            print(f"error in {self.model.__name__} get_by_attribute: {e}")
+            raise CRUDException(self.model.__name__, f"error in get_by_attribute {e}")
+        
 
     async def get_all(self, db: AsyncSession) -> List[ModelType]:
         try:
@@ -34,6 +52,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             await db.rollback()
             print(f"error in {self.model.__name__} get_all: {e}")
             raise CRUDException(self.model.__name__, f"error in get_all")
+        
 
     async def create(self, db: AsyncSession, obj_in: CreateSchemaType) -> ModelType: 
         try:
@@ -46,6 +65,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             await db.rollback()
             print(f"error in {self.model.__name__} create: {e}")
             raise CRUDException(self.model.__name__, f"error in create: {e}")
+        
 
     async def update(self, db: AsyncSession, db_obj: ModelType, obj_in: UpdateSchemaType) -> ModelType:
         try:
@@ -62,6 +82,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             await db.rollback()
             print(f"error in {self.model.__name__} update: {e}")
             raise CRUDException(self.model.__name__, f"error in update: {e}")
+    
     
     async def delete(self, db: AsyncSession, id: int) -> None:
         try:

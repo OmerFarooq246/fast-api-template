@@ -9,5 +9,8 @@ class Config(BaseSettings):
     PROJECT_NAME:str = "fast-api-template"
     VERSION:str = "v1"
     DATABASE_URI:str = os.getenv("DATABASE_URI", "")
+    SECRET_KEY:str = os.getenv("SECRET_KEY", "")
+    ALGORITHM:str = os.getenv("ALGORITHM", "")
+    ACCESS_TOKEN_EXPIRE_MINUTES:int = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "")
 
 config = Config()
