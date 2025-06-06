@@ -19,7 +19,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             result = await db.execute(select(self.model).where(self.model.id == id))
             obj = result.scalars().first()
             if obj is None:
-                raise CRUDException(self.model.__name__, f"{self.model.__name__} with id {id} not found")
+                raise CRUDException(self.model.__name__, f"{self.model.__name__} with id {id} not found", 404)
             return obj
         except Exception as e:
             await db.rollback()
@@ -67,7 +67,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         try:
             result = await db.execute(delete(self.model).where(self.model.id == id))
             if result.rowcount == 0:
-                raise CRUDException(self.model.__name__, f"{self.model.__name__} with id {id} not found")
+                raise CRUDException(self.model.__name__, f"{self.model.__name__} with id {id} not found", 404)
             await db.commit()
         except Exception as e:
             await db.rollback()

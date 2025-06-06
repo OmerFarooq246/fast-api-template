@@ -27,4 +27,4 @@ app.add_exception_handler(CRUDException, crud_exception_handler)
 app.include_router(router)
 
 # Mount static folder for serving
-app.mount("/public", StaticFiles(directory="public"), name="public")
+app.mount("/public", StaticFiles(directory="app/public"), name="public")
