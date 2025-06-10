@@ -1,7 +1,7 @@
 setup:
 1. venv create, python -m venv ./venv
-2. pip install -r requirements.txt
-3. source venv/bin/activate
+2. source venv/bin/activate
+3. pip install -r requirements.txt
 4. env update if necessary
 5. alembic revision --autogenerate -m "Initial migration"
 6. alembic upgrade head
