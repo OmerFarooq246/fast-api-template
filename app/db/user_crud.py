@@ -16,6 +16,9 @@ class UserCRUD(CRUDBase[Users, CreateUserSchema, UpdateUserSchema]):
             return db_obj
         except Exception as e:
             await db.rollback()
+            if "ix_users_username" in str(e):
+                print(f"duplicate username in {self.model.__name__} create: {e}")
+                raise CRUDException(self.model.__name__, f"duplicate username in create")
             print(f"error in {self.model.__name__} create: {e}")
             raise CRUDException(self.model.__name__, f"error in create: {e}")
 
