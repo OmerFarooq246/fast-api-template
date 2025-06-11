@@ -16,8 +16,8 @@ class UserResponseSchema(BaseModel):
 
 class UpdateUserSchema(BaseModel):
     # username: Optional[str] = Field(None, min_length=3, max_length=50)
-    username: Optional[Annotated[str, Field(min_length=3, max_length=50)]] = None
-    password: Optional[Annotated[str, Field(None, min_length=8)]] = None
+    username: Annotated[Optional[str], Field(min_length=3, max_length=50)] = None
+    password: Annotated[Optional[str], Field(min_length=8)] = None
     model_config = ConfigDict(from_attributes=True)
 
 
