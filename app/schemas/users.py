@@ -1,26 +1,24 @@
-from pydantic import BaseModel, Field
-from typing import Optional
-
+from pydantic import BaseModel, Field, ConfigDict
+from typing import Optional, Annotated
+from datetime import datetime
 
 class CreateUserSchema(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
-    password: str = Field(..., min_length=6)
-
-    class Config:
-        orm_mode = True
+    username: Annotated[str, Field(..., min_length=3, max_length=50)]
+    password: Annotated[str, Field(..., min_length=8)]
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserResponseSchema(BaseModel):
     id: int
     username: str
+    created_at: datetime
 
 
 class UpdateUserSchema(BaseModel):
-    username: Optional[str] = Field(None, min_length=3, max_length=50)
-    password: Optional[str] = Field(None, min_length=6)
-
-    class Config:
-        orm_mode = True
+    # username: Optional[str] = Field(None, min_length=3, max_length=50)
+    username: Optional[Annotated[str, Field(min_length=3, max_length=50)]] = None
+    password: Optional[Annotated[str, Field(None, min_length=8)]] = None
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserLoginSchema(BaseModel):
