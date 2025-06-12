@@ -1,8 +1,8 @@
-"""users_model
+"""Initial migration
 
-Revision ID: 6d3b39b8f53f
+Revision ID: c80e17e24834
 Revises: 
-Create Date: 2025-06-05 22:42:56.083034
+Create Date: 2025-06-12 18:11:51.192009
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '6d3b39b8f53f'
+revision: str = 'c80e17e24834'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -25,8 +25,9 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(), nullable=False),
     sa.Column('password', sa.String(), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('role', sa.Enum('SUPER_ADMIN', 'ADMIN', 'USER', name='userroles'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_username'), 'users', ['username'], unique=True)

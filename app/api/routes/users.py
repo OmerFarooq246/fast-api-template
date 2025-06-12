@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from app.core.security import get_current_user
+from app.core.security import ensuer_super_admin
 from app.db.database import get_db
 from app.models.users import Users
 from app.schemas.users import CreateUserSchema, UpdateUserSchema, UserResponseSchema
@@ -23,7 +23,7 @@ async def create_user(
 async def get_user(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: Users = Depends(get_current_user)
+    current_user: Users = Depends(ensuer_super_admin)
 ):
     user = await user_crud.get(db, user_id)
     return user
@@ -32,7 +32,7 @@ async def get_user(
 @router.get("/", response_model=List[UserResponseSchema], summary="Get all users")
 async def get_all_users(
     db: AsyncSession = Depends(get_db),
-    current_user: Users = Depends(get_current_user)
+    current_user: Users = Depends(ensuer_super_admin)
 ):
     users = await user_crud.get_all(db)
     if not users:
@@ -45,7 +45,7 @@ async def update_user(
     user_id: int, 
     user_in: UpdateUserSchema,
     db: AsyncSession = Depends(get_db),
-    current_user: Users = Depends(get_current_user)
+    current_user: Users = Depends(ensuer_super_admin)
 ):
     db_user = await user_crud.get(db, user_id)
     updated_user = await user_crud.update(db, db_user, user_in)
@@ -56,7 +56,7 @@ async def update_user(
 async def delete_user(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: Users = Depends(get_current_user)
+    current_user: Users = Depends(ensuer_super_admin)
 ):
     await user_crud.delete(db, user_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

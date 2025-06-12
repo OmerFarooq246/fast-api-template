@@ -11,6 +11,7 @@ class CreateUserSchema(BaseModel):
 class UserResponseSchema(BaseModel):
     id: int
     username: str
+    role: str
     created_at: datetime
 
 
@@ -18,6 +19,7 @@ class UpdateUserSchema(BaseModel):
     # username: Optional[str] = Field(None, min_length=3, max_length=50)
     username: Annotated[Optional[str], Field(min_length=3, max_length=50)] = None
     password: Annotated[Optional[str], Field(min_length=8)] = None
+    role: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
 

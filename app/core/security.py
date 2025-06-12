@@ -31,7 +31,6 @@ def decode_access_token(token: str):
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
-    # db: AsyncSession = Depends(get_db)
 ):
     from jose import JWTError
 
@@ -51,7 +50,31 @@ async def get_current_user(
 			headers={"WWW-Authenticate": "Bearer"},
 		)
 
-    # user = await user_crud.get_by_attribute(db, "username", username)
-    # return user
     print(f"payload: {payload}")
     return payload
+
+
+async def ensuer_super_admin(
+    current_user: dict = Depends(get_current_user)
+):
+    role = current_user.get("role")
+    print(f"role: {role}")
+    if role != "SUPER_ADMIN":
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied: Insufficient privileges."
+        )
+    return current_user
+
+
+async def ensuer_admin(
+    current_user: dict = Depends(get_current_user)
+):
+    role = current_user.get("role")
+    print(f"role: {role}")
+    if role != "ADMIN" and role != "SUPER_ADMIN":
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied: Insufficient privileges."
+        )
+    return current_user
