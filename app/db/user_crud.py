@@ -9,21 +9,21 @@ class UserCRUD(CRUDBase[Users, CreateUserSchema, UpdateUserSchema]):
     async def create(self, db: AsyncSession, obj_in: CreateUserSchema) -> Users:
         try:
             hashed = hash_password(obj_in.password)
-            db_obj = self.model(username=obj_in.username, password=hashed)
+            db_obj = self.model(email=obj_in.email, password=hashed)
             db.add(db_obj)
             await db.commit()
             await db.refresh(db_obj)
             return db_obj
         except Exception as e:
             await db.rollback()
-            if "ix_users_username" in str(e):
-                print(f"duplicate username in {self.model.__name__} create: {e}")
-                raise CRUDException(self.model.__name__, f"duplicate username in create")
+            if "ix_users_email" in str(e):
+                print(f"duplicate email in {self.model.__name__} create: {e}")
+                raise CRUDException(self.model.__name__, f"duplicate email in create")
             print(f"error in {self.model.__name__} create: {e}")
             raise CRUDException(self.model.__name__, f"error in create: {e}")
 
-    async def authenticate(self, db: AsyncSession, username: str, password: str) -> Users:
-        user = await self.get_by_attribute(db, "username", username)
+    async def authenticate(self, db: AsyncSession, email: str, password: str) -> Users:
+        user = await self.get_by_attribute(db, "email", email)
         if not user or not verify_password(password, user.password):
             print(f"error in {self.model.__name__} authenticate: incorrect password")
             raise CRUDException(self.model.__name__, f"error in authenticate: incorrect password", 401)
