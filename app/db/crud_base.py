@@ -16,7 +16,8 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     async def get(self, db: AsyncSession, id: int) -> Optional[ModelType]:
         try:
-            result = await db.execute(select(self.model).where(self.model.id == id))
+            stmt = select(self.model).where(self.model.id == id)
+            result = await db.execute(stmt)
             obj = result.scalars().first()
             if obj is None:
                 raise CRUDException(self.model.__name__, f"{self.model.__name__} with id {id} not found", 404)
@@ -27,17 +28,24 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             raise CRUDException(self.model.__name__, f"error in get with id: {id}")
         
         
-    async def get_by_attribute(self, db: AsyncSession, attr: str, value: any) -> Optional[ModelType]:
+    async def get_by_attribute(self, db: AsyncSession, attr: str, value: any, all: bool = False) -> Optional[List[ModelType]]:
         try:
             column = getattr(self.model, attr, None)
             if column is None:
                 raise CRUDException(self.model.__name__, f"Attribute '{attr}' not found")
 
-            result = await db.execute(select(self.model).where(column == value))
-            obj = result.scalars().first()
-            if obj is None:
-                raise CRUDException(self.model.__name__, f"{self.model.__name__} with {attr}={value} not found", 404)
-            return obj
+            stmt = select(self.model).where(column == value)
+            result = await db.execute(stmt)
+            if all:
+                obj = result.scalars().all()
+                if obj is None:
+                    raise CRUDException(self.model.__name__, f"{self.model.__name__} with {attr}={value} not found", 404)
+                return obj
+            else:
+                obj = result.scalars().first()
+                if obj is None:
+                    raise CRUDException(self.model.__name__, f"{self.model.__name__} with {attr}={value} not found", 404)
+                return [obj]
         except Exception as e:
             await db.rollback()
             print(f"error in {self.model.__name__} get_by_attribute: {e}")
@@ -46,7 +54,8 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     async def get_all(self, db: AsyncSession) -> List[ModelType]:
         try:
-            result = await db.execute(select(self.model))
+            stmt = select(self.model).order_by(self.model.id.asc())
+            result = await db.execute(stmt)
             return result.scalars().all()
         except Exception as e:
             await db.rollback()

@@ -9,7 +9,8 @@ class UserCRUD(CRUDBase[Users, CreateUserSchema, UpdateUserSchema]):
     async def create(self, db: AsyncSession, obj_in: CreateUserSchema) -> Users:
         try:
             hashed = hash_password(obj_in.password)
-            db_obj = self.model(email=obj_in.email, password=hashed)
+            db_obj = self.model(**obj_in.model_dump())
+            db_obj.password=hashed
             db.add(db_obj)
             await db.commit()
             await db.refresh(db_obj)
@@ -24,6 +25,7 @@ class UserCRUD(CRUDBase[Users, CreateUserSchema, UpdateUserSchema]):
 
     async def authenticate(self, db: AsyncSession, email: str, password: str) -> Users:
         user = await self.get_by_attribute(db, "email", email)
+        user = user[0]
         if not user or not verify_password(password, user.password):
             print(f"error in {self.model.__name__} authenticate: incorrect password")
             raise CRUDException(self.model.__name__, f"error in authenticate: incorrect password", 401)
