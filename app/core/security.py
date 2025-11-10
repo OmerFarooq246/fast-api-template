@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from jose import jwt
 from app.core.config import config
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jose import JWTError
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -40,8 +41,6 @@ bearer_scheme = HTTPBearer()
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)
 ):
-    from jose import JWTError
-
     token = credentials.credentials
     try:
         payload = decode_access_token(token)
