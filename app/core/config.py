@@ -6,7 +6,7 @@ load_dotenv()
 
 class Config(BaseSettings):
     ORIGINS:list[str] = ["http://localhost:3000"]
-    PROJECT_NAME:str = "fast-api-template"
+    PROJECT_NAME:str = os.getenv("PROJECT_NAME", "fast-api-template")
     VERSION:str = "v1"
     DATABASE_URI:str = os.getenv("DATABASE_URI", "")
     SECRET_KEY:str = os.getenv("SECRET_KEY", "")
