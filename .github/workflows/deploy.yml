@@ -22,15 +22,14 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # Variables
             APP_PATH="${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}"
             SERVICE_FILE="/etc/systemd/system/${{ secrets.APP_NAME }}.service"
 
             # Clone or pull repo
             if [ ! -d "$APP_PATH/.git" ]; then
               echo "Repo not found. Cloning..."
-              cd ${{ secrets.APPS_FOLDER }}
-              git clone ${{ secrets.REPO_URL }} ${{ secrets.APP_NAME }}
+              cd "${{ secrets.APPS_FOLDER }}"
+              git clone "${{ secrets.REPO_URL }}" "${{ secrets.APP_NAME }}"
             else
               echo "Repo exists. Pulling latest changes..."
               cd "$APP_PATH"
@@ -55,7 +54,7 @@ jobs:
             # Create systemd service if missing
             if [ ! -f "$SERVICE_FILE" ]; then
               echo "Creating systemd service..."
-              sudo tee "$SERVICE_FILE" > /dev/null <<EOL
+              sudo bash -c "cat > $SERVICE_FILE <<'EOF'
 [Unit]
 Description=FastAPI App
 After=network.target
@@ -68,12 +67,12 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
-EOL
+EOF"
 
               # Reload systemd daemon and enable service
               sudo systemctl daemon-reload
-              sudo systemctl enable ${{ secrets.APP_NAME }}
+              sudo systemctl enable "${{ secrets.APP_NAME }}"
             fi
 
             # Restart the FastAPI service
-            sudo systemctl restart ${{ secrets.APP_NAME }}
+            sudo systemctl restart "${{ secrets.APP_NAME }}"
