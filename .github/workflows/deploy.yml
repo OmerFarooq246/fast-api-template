@@ -22,55 +22,57 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            if [ ! -d "${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}/.git" ]; then
+            # Variables
+            APP_PATH="${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}"
+            SERVICE_FILE="/etc/systemd/system/${{ secrets.APP_NAME }}.service"
+
+            # Clone or pull repo
+            if [ ! -d "$APP_PATH/.git" ]; then
               echo "Repo not found. Cloning..."
               cd ${{ secrets.APPS_FOLDER }}
               git clone ${{ secrets.REPO_URL }} ${{ secrets.APP_NAME }}
-              cd ${{ secrets.APP_NAME }}
             else
               echo "Repo exists. Pulling latest changes..."
-              cd "${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}"
+              cd "$APP_PATH"
               git pull
             fi
 
+            # Install Python venv and pip
             sudo apt update
             sudo apt install -y python3-venv python3-pip
 
             # Create venv if missing
-            if [ ! -d "${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}/venv" ]; then
+            if [ ! -d "$APP_PATH/venv" ]; then
               echo "Creating virtual environment..."
-              cd "${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}"
-              python3 -m venv venv
+              python3 -m venv "$APP_PATH/venv"
             fi
 
             # Activate venv & install dependencies
-            cd "${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}"
-            source venv/bin/activate
+            source "$APP_PATH/venv/bin/activate"
             pip install --upgrade pip
-            pip install -r requirements.txt
+            pip install -r "$APP_PATH/requirements.txt"
 
             # Create systemd service if missing
-            SERVICE_FILE="/etc/systemd/system/${{ secrets.APP_NAME }}.service"
             if [ ! -f "$SERVICE_FILE" ]; then
               echo "Creating systemd service..."
-              sudo bash -c "cat > $SERVICE_FILE" <<EOL
+              sudo tee "$SERVICE_FILE" > /dev/null <<EOL
 [Unit]
 Description=FastAPI App
 After=network.target
 
 [Service]
 User=${{ secrets.SERVER_USER }}
-WorkingDirectory="${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}"
-ExecStart=${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
+WorkingDirectory=$APP_PATH
+ExecStart=$APP_PATH/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 EOL
 
-            # Reload systemd daemon and enable service
-            sudo systemctl daemon-reload
-            sudo systemctl enable ${{ secrets.APP_NAME }}
+              # Reload systemd daemon and enable service
+              sudo systemctl daemon-reload
+              sudo systemctl enable ${{ secrets.APP_NAME }}
             fi
 
             # Restart the FastAPI service
