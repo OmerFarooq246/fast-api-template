@@ -51,28 +51,30 @@ jobs:
             pip install --upgrade pip
             pip install -r "$APP_PATH/requirements.txt"
 
-            # Create systemd service if missing
             if [ ! -f "$SERVICE_FILE" ]; then
               echo "Creating systemd service..."
-              sudo bash -c "cat > $SERVICE_FILE <<'EOF'
-[Unit]
-Description=FastAPI App
-After=network.target
 
-[Service]
-User=${{ secrets.SERVER_USER }}
-WorkingDirectory=$APP_PATH
-ExecStart=$APP_PATH/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
-Restart=always
+              # Create empty file
+              sudo touch "$SERVICE_FILE"
 
-[Install]
-WantedBy=multi-user.target
-EOF"
+              # Write each line
+              sudo sh -c "echo '[Unit]' > $SERVICE_FILE"
+              sudo sh -c "echo 'Description=FastAPI App' >> $SERVICE_FILE"
+              sudo sh -c "echo 'After=network.target' >> $SERVICE_FILE"
+              sudo sh -c "echo '' >> $SERVICE_FILE"
+              sudo sh -c "echo '[Service]' >> $SERVICE_FILE"
+              sudo sh -c "echo 'User=${{ secrets.SERVER_USER }}' >> $SERVICE_FILE"
+              sudo sh -c "echo 'WorkingDirectory=$APP_PATH' >> $SERVICE_FILE"
+              sudo sh -c "echo 'ExecStart=$APP_PATH/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port ${{ secrets.PORT }}' >> $SERVICE_FILE"
+              sudo sh -c "echo 'Restart=always' >> $SERVICE_FILE"
+              sudo sh -c "echo '' >> $SERVICE_FILE"
+              sudo sh -c "echo '[Install]' >> $SERVICE_FILE"
+              sudo sh -c "echo 'WantedBy=multi-user.target' >> $SERVICE_FILE"
 
-              # Reload systemd daemon and enable service
+              # Reload systemd and enable service
               sudo systemctl daemon-reload
               sudo systemctl enable "${{ secrets.APP_NAME }}"
             fi
 
-            # Restart the FastAPI service
+            # Restart the service
             sudo systemctl restart "${{ secrets.APP_NAME }}"
