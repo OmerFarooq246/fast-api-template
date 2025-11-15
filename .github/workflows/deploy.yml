@@ -33,15 +33,18 @@ jobs:
               git pull
             fi
 
+            sudo apt update
+            sudo apt install -y python3-venv python3-pip
+
             # Create venv if missing
-            if [ ! -d "${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}/venv" ]; then
+            if [ ! -d "venv" ]; then
               echo "Creating virtual environment..."
-              cd "${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}"
+              # cd "${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}"
               python3 -m venv venv
             fi
 
             # Activate venv & install dependencies
-            cd "${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}"
+            # cd "${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}"
             source venv/bin/activate
             pip install -r requirements.txt
 
