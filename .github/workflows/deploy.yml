@@ -1,0 +1,29 @@
+name: Deploy FastAPI on Main Updates
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  deploy-fastapi:
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.FASTAPI_SERVER_HOST }}
+          username: ${{ secrets.FASTAPI_SERVER_USER }}
+          key: ${{ secrets.FASTAPI_SERVER_SSH_KEY }}
+          script: |
+            cd ${{ secrets.APP_FOLDER }}
+            git pull
+            source venv/bin/activate
+            pip install -r requirements.txt
+            sudo systemctl restart fastapi
