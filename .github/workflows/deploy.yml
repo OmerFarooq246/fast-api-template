@@ -22,25 +22,26 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            if [ ! -d "${{ secrets.APP_FOLDER }}/.git" ]; then
+            if [ ! -d "${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}/.git" ]; then
               echo "Repo not found. Cloning..."
+              cd ${{ secrets.APPS_FOLDER }}
               git clone ${{ secrets.REPO_URL }} ${{ secrets.APP_NAME }}
-              cd ${{ secrets.APP_FOLDER }}
+              cd ${{ secrets.APP_NAME }}
             else
               echo "Repo exists. Pulling latest changes..."
-              cd ${{ secrets.APP_FOLDER }}
+              cd "${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}"
               git pull
             fi
 
             # Create venv if missing
-            if [ ! -d "${{ secrets.APP_FOLDER }}/venv" ]; then
+            if [ ! -d "${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}/venv" ]; then
               echo "Creating virtual environment..."
-              cd ${{ secrets.APP_FOLDER }}
+              cd "${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}"
               python3 -m venv venv
             fi
 
             # Activate venv & install dependencies
-            cd ${{ secrets.APP_FOLDER }}
+            cd "${{ secrets.APPS_FOLDER }}/${{ secrets.APP_NAME }}"
             source venv/bin/activate
             pip install -r requirements.txt
 
