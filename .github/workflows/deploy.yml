@@ -51,6 +51,11 @@ jobs:
             pip install --upgrade pip
             pip install -r "$APP_PATH/requirements.txt"
 
+            if [ ! -d "$APP_PATH/public" ]; then
+              echo "Creating public folder..."
+              mkdir "$APP_PATH/public"
+            fi
+
             if [ ! -f "$SERVICE_FILE" ]; then
               echo "Creating systemd service..."
 
