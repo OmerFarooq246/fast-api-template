@@ -19,7 +19,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "httpx>=0.28.1,<1",
+    "httpx2>=2.7.0,<3",
     "mypy>=1.16.0,<2",
     "pre-commit>=4.2.0,<5",
     "pytest>=8.4.0,<9",
@@ -80,3 +80,25 @@ warn_unreachable = true
 show_error_codes = true
 pretty = true
 exclude = ["^app/alembic/"]
+
+[tool.pytest.ini_options]
+addopts = ["--strict-config", "--strict-markers", "-ra"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+markers = [
+    "integration: requires a dedicated PostgreSQL test database",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+
+[tool.coverage.report]
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]
+show_missing = true
+skip_covered = true

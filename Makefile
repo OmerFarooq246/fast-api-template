@@ -1,4 +1,4 @@
-.PHONY: check format lint test typecheck
+.PHONY: check coverage format lint test typecheck
 
 UV ?= uv
 
@@ -11,9 +11,12 @@ lint:
 	$(UV) run ruff check .
 
 typecheck:
-	$(UV) run mypy app
+	$(UV) run mypy app tests
 
 test:
 	$(UV) run pytest
 
-check: lint typecheck
+coverage:
+	$(UV) run pytest --cov=app --cov-report=term-missing --cov-report=xml
+
+check: lint typecheck test
