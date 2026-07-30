@@ -1,9 +1,14 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.core.config import config
+
+from app.api.exception_handlers import (
+    CRUDException,
+    crud_exception_handler,
+    global_exception_handler,
+)
 from app.api.router import router
-from app.api.exception_handlers import global_exception_handler, CRUDException, crud_exception_handler
+from app.core.config import config
 
 app = FastAPI(
     title=config.PROJECT_NAME,

@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional, Annotated
 from datetime import datetime
+from typing import Annotated
+
+from pydantic import BaseModel, ConfigDict, Field
+
 
 class CreateUserSchema(BaseModel):
     email: Annotated[str, Field(..., min_length=3, max_length=50)]
@@ -17,9 +19,9 @@ class UserResponseSchema(BaseModel):
 
 
 class UpdateUserSchema(BaseModel):
-    email: Annotated[Optional[str], Field(min_length=3, max_length=50)] = None
-    password: Annotated[Optional[str], Field(min_length=8)] = None
-    role: Optional[str] = None
+    email: Annotated[str | None, Field(min_length=3, max_length=50)] = None
+    password: Annotated[str | None, Field(min_length=8)] = None
+    role: str | None = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -31,5 +33,5 @@ class UserLoginSchema(BaseModel):
 class LoginSchema(BaseModel):
     access_token: str
     refresh_token: str
-    token_type: str = "bearer"
-    user: Optional[UserResponseSchema] = None
+    token_type: str = "bearer"  # noqa: S105 - OAuth token scheme, not a credential.
+    user: UserResponseSchema | None = None

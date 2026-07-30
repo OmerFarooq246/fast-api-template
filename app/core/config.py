@@ -1,16 +1,19 @@
-from pydantic_settings import BaseSettings
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
 
 load_dotenv()
 
+
 class Config(BaseSettings):
-    ORIGINS:list[str] = ["http://localhost:3000"]
-    PROJECT_NAME:str = os.getenv("PROJECT_NAME", "fast-api-template")
-    VERSION:str = "v1"
-    DATABASE_URI:str = os.getenv("DATABASE_URI", "")
-    SECRET_KEY:str = os.getenv("SECRET_KEY", "")
-    ALGORITHM:str = os.getenv("ALGORITHM", "")
-    ACCESS_TOKEN_EXPIRE_MINUTES:int = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "")
+    ORIGINS: list[str] = ["http://localhost:3000"]
+    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "fast-api-template")
+    VERSION: str = "v1"
+    DATABASE_URI: str = os.getenv("DATABASE_URI", "")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "")
+    ALGORITHM: str = os.getenv("ALGORITHM", "")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+
 
 config = Config()

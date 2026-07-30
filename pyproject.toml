@@ -26,8 +26,57 @@ dev = [
     "pytest-asyncio>=1.0.0,<2",
     "pytest-cov>=6.2.1,<7",
     "ruff>=0.11.13,<1",
+    "types-passlib>=1.7.7.20250602",
+    "types-python-jose>=3.5.0.20250531",
 ]
 
 [tool.uv]
 default-groups = ["dev"]
 package = false
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["app", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "ASYNC",
+    "B",
+    "C4",
+    "DTZ",
+    "E4",
+    "E7",
+    "E9",
+    "F",
+    "I",
+    "PERF",
+    "PIE",
+    "RUF",
+    "S",
+    "SIM",
+    "UP",
+]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.Path",
+    "fastapi.Query",
+    "fastapi.Security",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+strict = true
+warn_unreachable = true
+show_error_codes = true
+pretty = true
+exclude = ["^app/alembic/"]

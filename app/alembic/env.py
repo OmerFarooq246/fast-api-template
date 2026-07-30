@@ -1,13 +1,14 @@
 import asyncio
-from app.core.config import config
 from logging.config import fileConfig
+
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-from alembic import context
 
+import app.models  # noqa: F401  # Register model metadata for autogeneration.
+from alembic import context
+from app.core.config import config
 from app.db.database import Base
-from app import models
 
 # Alembic Config object
 alembic_config = context.config
