@@ -1,13 +1,16 @@
-setup:
-1. venv create: python3 -m venv ./venv
-2. venv activate: source venv/bin/activate
-3. pip install -r requirements.txt | pip freeze > requirements.txt
-4. env update if necessary
-5. alembic revision --autogenerate -m "Initial migration" (first create versions folder under app/alembic)
-6. alembic upgrade head
-7. uvicorn app.main:app --reload --port 8000        => for dev
-8. uvicorn app.main:app --host 0.0.0.0 --port 8000  => for prod
+# FastAPI Template
 
-Remember:
-1. include new models in app.models.__init__.py
-2. create public folder in root of project
+## Setup
+
+This project uses [uv](https://docs.astral.sh/uv/) to create reproducible
+development environments from `pyproject.toml` and `uv.lock`.
+
+```bash
+uv sync
+cp env.example .env
+uv run alembic upgrade head
+uv run uvicorn app.main:app --reload --port 8000
+```
+
+Before generating a migration, import each new model from
+`app/models/__init__.py` so Alembic can discover its metadata.
