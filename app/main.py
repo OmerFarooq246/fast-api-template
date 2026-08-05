@@ -7,12 +7,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.api.exception_handlers import (
-    CRUDException,
-    crud_exception_handler,
+    application_exception_handler,
     global_exception_handler,
 )
 from app.api.router import router
 from app.core.config import Settings, get_settings
+from app.core.exceptions import ApplicationError
 from app.db.database import create_db_engine, create_session_factory
 
 PUBLIC_DIRECTORY = Path(__file__).resolve().parent.parent / "public"
@@ -50,7 +50,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
 
     application.add_exception_handler(Exception, global_exception_handler)
-    application.add_exception_handler(CRUDException, crud_exception_handler)
+    application.add_exception_handler(ApplicationError, application_exception_handler)
     application.include_router(router)
     application.mount("/public", StaticFiles(directory=PUBLIC_DIRECTORY), name="public")
 
