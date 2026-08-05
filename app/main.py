@@ -11,14 +11,14 @@ from app.api.router import router
 from app.core.config import config
 
 app = FastAPI(
-    title=config.PROJECT_NAME,
-    version=config.VERSION,
+    title=config.project_name,
+    version=config.version,
 )
 
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=config.ORIGINS,
+    allow_origins=config.cors_origin_strings,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

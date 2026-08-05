@@ -7,7 +7,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from app.core.config import config
 
 # Configure SQLAlchemy for PostgreSQL
-SQLALCHEMY_DATABASE_URL = config.DATABASE_URI
+SQLALCHEMY_DATABASE_URL = config.database_uri
 
 # Create async engine
 engine = create_async_engine(

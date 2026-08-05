@@ -14,7 +14,7 @@ from app.db.database import Base
 alembic_config = context.config
 
 # Set the async database URL for Alembic
-alembic_config.set_main_option("sqlalchemy.url", config.DATABASE_URI)
+alembic_config.set_main_option("sqlalchemy.url", config.database_uri)
 
 # Set up logging
 if alembic_config.config_file_name is not None:

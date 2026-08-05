@@ -22,25 +22,37 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
     expire = datetime.now(UTC) + (
-        expires_delta or timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expires_delta or timedelta(minutes=config.access_token_expire_minutes)
     )
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, config.SECRET_KEY, algorithm=config.ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode,
+        config.secret_key.get_secret_value(),
+        algorithm=config.algorithm,
+    )
     return encoded_jwt
 
 
 def create_refresh_token(data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
     expire = datetime.now(UTC) + (
-        expires_delta or timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expires_delta or timedelta(minutes=config.access_token_expire_minutes)
     )
     to_encode.update({"exp": expire, "type": "refresh"})
-    encoded_jwt = jwt.encode(to_encode, config.SECRET_KEY, algorithm=config.ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode,
+        config.secret_key.get_secret_value(),
+        algorithm=config.algorithm,
+    )
     return encoded_jwt
 
 
 def decode_access_token(token: str) -> dict[str, Any]:
-    return jwt.decode(token, config.SECRET_KEY, algorithms=[config.ALGORITHM])
+    return jwt.decode(
+        token,
+        config.secret_key.get_secret_value(),
+        algorithms=[config.algorithm],
+    )
 
 
 bearer_scheme = HTTPBearer()
