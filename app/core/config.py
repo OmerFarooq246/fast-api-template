@@ -66,7 +66,3 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-
-
-# Compatibility alias for modules migrated in later Module 2 commits.
-config = get_settings()

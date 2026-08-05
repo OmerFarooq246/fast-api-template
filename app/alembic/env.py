@@ -7,14 +7,15 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 import app.models  # noqa: F401  # Register model metadata for autogeneration.
 from alembic import context
-from app.core.config import config
+from app.core.config import get_settings
 from app.db.database import Base
 
 # Alembic Config object
 alembic_config = context.config
+settings = get_settings()
 
 # Set the async database URL for Alembic
-alembic_config.set_main_option("sqlalchemy.url", config.database_uri)
+alembic_config.set_main_option("sqlalchemy.url", settings.database_uri)
 
 # Set up logging
 if alembic_config.config_file_name is not None:

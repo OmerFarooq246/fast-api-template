@@ -1,5 +1,5 @@
-from collections.abc import AsyncIterator
-from typing import Any
+from collections.abc import AsyncGenerator
+from typing import cast
 
 from fastapi import Request
 from sqlalchemy import MetaData
@@ -35,17 +35,10 @@ def create_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSessi
 
 
 def get_session_factory(request: Request) -> async_sessionmaker[AsyncSession]:
-    session_factory: Any = request.app.state.db_session_factory
-    if not isinstance(session_factory, async_sessionmaker):
-        raise RuntimeError("Database session factory is not configured")
-    return session_factory
+    return cast(async_sessionmaker[AsyncSession], request.app.state.db_session_factory)
 
 
-async def get_db(request: Request) -> AsyncIterator[AsyncSession]:
+async def get_db(request: Request) -> AsyncGenerator[AsyncSession]:
     session_factory = get_session_factory(request)
-    async with session_factory() as session:
-        try:
-            yield session
-        except Exception:
-            await session.rollback()
-            raise
+    async with session_factory() as session, session.begin():
+        yield session
