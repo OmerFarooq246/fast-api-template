@@ -4,13 +4,13 @@ from pydantic import BaseModel
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import DeclarativeMeta
 
 from app.api.exception_handlers import CRUDException
+from app.db.database import Base
 
 
 class CRUDBase[
-    ModelType: DeclarativeMeta,
+    ModelType: Base,
     CreateSchemaType: BaseModel,
     UpdateSchemaType: BaseModel,
 ]:
@@ -19,7 +19,7 @@ class CRUDBase[
 
     async def get(self, db: AsyncSession, id: int) -> ModelType:
         try:
-            stmt = select(self.model).where(self.model.id == id)  # type: ignore[attr-defined]
+            stmt = select(self.model).where(self.model.id == id)
             result = await db.execute(stmt)
             obj = result.scalars().first()
             if obj is None:
@@ -67,9 +67,7 @@ class CRUDBase[
 
     async def get_all(self, db: AsyncSession) -> list[ModelType]:
         try:
-            stmt = select(self.model).order_by(
-                self.model.id.asc()  # type: ignore[attr-defined]
-            )
+            stmt = select(self.model).order_by(self.model.id.asc())
             result = await db.execute(stmt)
             return list(result.scalars().all())
         except Exception as e:
@@ -110,7 +108,7 @@ class CRUDBase[
     async def delete(self, db: AsyncSession, id: int) -> None:
         try:
             result = await db.execute(
-                delete(self.model).where(self.model.id == id)  # type: ignore[attr-defined]
+                delete(self.model).where(self.model.id == id)
             )
             if result.rowcount == 0:  # type: ignore[attr-defined]
                 raise CRUDException(

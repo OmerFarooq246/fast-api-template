@@ -26,8 +26,8 @@ class UserCRUD(CRUDBase[Users, CreateUserSchema, UpdateUserSchema]):
             raise CRUDException(self.model.__name__, f"error in create: {e}") from e
 
     async def authenticate(self, db: AsyncSession, email: str, password: str) -> Users:
-        user = await self.get_by_attribute(db, "email", email)
-        user = user[0]
+        users = await self.get_by_attribute(db, "email", email)
+        user = users[0]
         if not user or not verify_password(password, user.password):
             print(f"error in {self.model.__name__} authenticate: incorrect password")
             raise CRUDException(

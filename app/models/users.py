@@ -1,7 +1,7 @@
 import enum
 from datetime import UTC, datetime
 
-from sqlalchemy import DateTime, Enum, Integer, String
+from sqlalchemy import DateTime, Enum, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.database import Base
@@ -13,12 +13,9 @@ class UserRoles(enum.Enum):
     USER = "USER"
 
 
-class Users(Base):  # type: ignore[misc]
+class Users(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(
-        Integer, primary_key=True
-    )  # index and auto_increment true by default
     email: Mapped[str] = mapped_column(
         String, unique=True, nullable=False, index=True
     )  # index=True for faster lookups, via a datastructure maintained by engine
