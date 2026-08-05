@@ -4,12 +4,19 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.main import app as application
+from app.core.config import Environment, Settings
+from app.main import create_app
 
 
 @pytest.fixture(scope="session")
 def app() -> FastAPI:
-    return application
+    return create_app(
+        Settings(
+            environment=Environment.TEST,
+            database_uri="postgresql+asyncpg://postgres:postgres@localhost/test_unused",
+            secret_key="test-secret",  # noqa: S106
+        )
+    )
 
 
 @pytest.fixture
