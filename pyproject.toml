@@ -13,7 +13,7 @@ dependencies = [
     "pydantic-settings>=2.9.1,<3",
     "python-jose[cryptography]>=3.5.0,<4",
     "python-multipart>=0.0.20,<1",
-    "sqlalchemy>=2.0.41,<3",
+    "sqlalchemy[asyncio]>=2.0.41,<3",
     "uvicorn[standard]>=0.34.3,<1",
 ]
 
