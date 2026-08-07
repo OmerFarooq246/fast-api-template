@@ -1,62 +1,68 @@
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import Response
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+
+from app.api.dependencies import SessionDep
 from app.core.security import ensuer_super_admin
-from app.db.database import get_db
 from app.models.users import Users
 from app.schemas.users import CreateUserSchema, UpdateUserSchema, UserResponseSchema
-from app.db.user_crud import user_crud
+from app.services.user_service import user_service
 
 router = APIRouter()
 
-@router.post("/", response_model=UserResponseSchema, status_code=status.HTTP_201_CREATED, summary="Register new user")
+
+@router.post(
+    "/",
+    response_model=UserResponseSchema,
+    status_code=status.HTTP_201_CREATED,
+    summary="Register new user",
+)
 async def create_user(
     user_in: CreateUserSchema,
-    db: AsyncSession = Depends(get_db),
-):
-    user = await user_crud.create(db, user_in)
+    db: SessionDep,
+) -> Users:
+    user = await user_service.create(db, user_in)
     return user
 
 
 @router.get("/{user_id}", response_model=UserResponseSchema, summary="Get a new user against an id")
 async def get_user(
     user_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: Users = Depends(ensuer_super_admin)
-):
-    user = await user_crud.get(db, user_id)
+    db: SessionDep,
+    current_user: Users = Depends(ensuer_super_admin),
+) -> Users:
+    user = await user_service.get(db, user_id)
     return user
 
 
-@router.get("/", response_model=List[UserResponseSchema], summary="Get all users")
+@router.get("/", response_model=list[UserResponseSchema], summary="Get all users")
 async def get_all_users(
-    db: AsyncSession = Depends(get_db),
-    current_user: Users = Depends(ensuer_super_admin)
-):
-    users = await user_crud.get_all(db)
+    db: SessionDep,
+    current_user: Users = Depends(ensuer_super_admin),
+) -> list[Users] | Response:
+    users = await user_service.list(db)
     if not users:
         return Response(status_code=status.HTTP_204_NO_CONTENT)
     return users
 
-#handle pass hash if found => remaining
+
 @router.patch("/{user_id}", response_model=UserResponseSchema, summary="Edit a user against an id")
 async def update_user(
-    user_id: int, 
+    user_id: int,
     user_in: UpdateUserSchema,
-    db: AsyncSession = Depends(get_db),
-    current_user: Users = Depends(ensuer_super_admin)
-):
-    db_user = await user_crud.get(db, user_id)
-    updated_user = await user_crud.update(db, db_user, user_in)
+    db: SessionDep,
+    current_user: Users = Depends(ensuer_super_admin),
+) -> Users:
+    updated_user = await user_service.update(db, user_id, user_in)
     return updated_user
 
 
-@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a user against an id")
+@router.delete(
+    "/{user_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a user against an id"
+)
 async def delete_user(
     user_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: Users = Depends(ensuer_super_admin)
-):
-    await user_crud.delete(db, user_id)
+    db: SessionDep,
+    current_user: Users = Depends(ensuer_super_admin),
+) -> Response:
+    await user_service.delete(db, user_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

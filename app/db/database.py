@@ -1,30 +1,44 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import sessionmaker
-from app.core.config import config
+from collections.abc import AsyncGenerator
+from typing import cast
 
-# Configure SQLAlchemy for PostgreSQL
-SQLALCHEMY_DATABASE_URL = config.DATABASE_URI
+from fastapi import Request
+from sqlalchemy import MetaData
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-# Create async engine
-engine = create_async_engine(
-        SQLALCHEMY_DATABASE_URL,
-        echo=False,
-        pool_pre_ping=True,
-    )
+NAMING_CONVENTION: dict[str, str] = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(column_0_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
 
-# Create async session factory
-async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
-# Dependency for FastAPI
-async def get_db():
-    async with async_session() as session:
-        try:
-            yield session
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+
+def create_db_engine(database_uri: str, *, echo: bool = False) -> AsyncEngine:
+    return create_async_engine(database_uri, echo=echo, pool_pre_ping=True)
+
+
+def create_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
+    return async_sessionmaker(bind=engine, expire_on_commit=False)
+
+
+def get_session_factory(request: Request) -> async_sessionmaker[AsyncSession]:
+    return cast(async_sessionmaker[AsyncSession], request.app.state.db_session_factory)
+
+
+async def get_db(request: Request) -> AsyncGenerator[AsyncSession]:
+    session_factory = get_session_factory(request)
+    async with session_factory() as session, session.begin():
+        yield session

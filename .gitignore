@@ -1,4 +1,12 @@
 .env
+.coverage
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.venv/
+coverage.xml
+htmlcov/
 venv
 __pycache__
 versions
+.DS_Store

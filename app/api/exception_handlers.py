@@ -1,26 +1,54 @@
-from fastapi import Request
+import logging
+
+from fastapi import Request, status
 from fastapi.responses import JSONResponse
 
-async def global_exception_handler(request: Request, exc: Exception):
+from app.core.exceptions import (
+    ApplicationError,
+    AuthenticationError,
+    PersistenceError,
+    ResourceConflictError,
+    ResourceNotFoundError,
+)
+
+logger = logging.getLogger(__name__)
+
+ERROR_STATUS_CODES: dict[type[ApplicationError], int] = {
+    ResourceNotFoundError: status.HTTP_404_NOT_FOUND,
+    ResourceConflictError: status.HTTP_409_CONFLICT,
+    AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+    PersistenceError: status.HTTP_500_INTERNAL_SERVER_ERROR,
+}
+
+
+async def application_exception_handler(
+    request: Request,
+    exc: Exception,
+) -> JSONResponse:
+    if not isinstance(exc, ApplicationError):
+        raise TypeError("application_exception_handler requires ApplicationError")
+
+    status_code = ERROR_STATUS_CODES.get(type(exc), status.HTTP_400_BAD_REQUEST)
+    headers = {"WWW-Authenticate": "Bearer"} if isinstance(exc, AuthenticationError) else None
     return JSONResponse(
-        status_code=500,
-        content={
-            "message": f"An unexpected error occurred: {str(exc)}",
-            "success": False,
-        },
+        status_code=status_code,
+        headers=headers,
+        content={"error": {"code": exc.code, "message": exc.message}},
     )
 
-class CRUDException(Exception):
-    def __init__(self, name: str, detail: str, status_code: int = 400):
-        self.name = name
-        self.detail = detail
-        self.status_code = status_code
 
-async def crud_exception_handler(request: Request, exc: CRUDException):
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.exception(
+        "Unhandled application error",
+        extra={"method": request.method, "path": request.url.path},
+        exc_info=exc,
+    )
     return JSONResponse(
-        status_code=exc.status_code,
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
-            "message": f"CRUD operation error for {exc.name}: {exc.detail}",
-            "success": False,
+            "error": {
+                "code": "internal_server_error",
+                "message": "An unexpected error occurred",
+            }
         },
     )
