@@ -3,7 +3,7 @@ name = "fast-api-template"
 version = "0.1.0"
 description = "A production-oriented FastAPI application template."
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13,<3.14"
 dependencies = [
     "alembic>=1.16.1,<2",
     "asyncpg>=0.30.0,<1",
@@ -36,7 +36,7 @@ default-groups = ["dev"]
 package = false
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py313"
 line-length = 100
 src = ["app", "tests"]
 
@@ -74,7 +74,7 @@ known-first-party = ["app"]
 "tests/**/*.py" = ["S101"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 plugins = ["pydantic.mypy"]
 strict = true
 warn_unreachable = true
