@@ -7,7 +7,7 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
 
-@pytest_asyncio.fixture(scope="session", loop_scope="session")
+@pytest_asyncio.fixture
 async def test_engine() -> AsyncIterator[AsyncEngine]:
     database_uri = os.getenv("TEST_DATABASE_URI")
     if database_uri is None:
@@ -24,7 +24,7 @@ async def test_engine() -> AsyncIterator[AsyncEngine]:
     await engine.dispose()
 
 
-@pytest_asyncio.fixture(loop_scope="session")
+@pytest_asyncio.fixture
 async def db_session(test_engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
     async with test_engine.connect() as connection:
         transaction = await connection.begin()
