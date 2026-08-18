@@ -6,6 +6,7 @@ from fastapi.responses import Response
 from app.api.dependencies import SessionDep, SuperAdminDep
 from app.models.users import User
 from app.schemas.users import UserAdminUpdate, UserCreate, UserPage, UserResponse
+from app.services.auth_service import auth_service
 from app.services.user_service import user_service
 
 router = APIRouter()
@@ -60,6 +61,8 @@ async def update_user(
     current_user: SuperAdminDep,
 ) -> User:
     updated_user = await user_service.update(db, user_id, user_in)
+    if user_in.is_active is False:
+        await auth_service.logout_all(db, user=updated_user)
     return updated_user
 
 

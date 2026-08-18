@@ -44,7 +44,7 @@ class UserAdminUpdate(BaseModel):
 class PasswordChange(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    current_password: str
+    current_password: Annotated[str, Field(min_length=1, max_length=1024)]
     new_password: Annotated[str, Field(min_length=8, max_length=1024)]
 
 
@@ -58,7 +58,7 @@ class UserPage(BaseModel):
 
 class UserLoginSchema(BaseModel):
     email: EmailStr
-    password: str
+    password: Annotated[str, Field(min_length=1, max_length=1024)]
 
     @field_validator("email", mode="after")
     @classmethod
