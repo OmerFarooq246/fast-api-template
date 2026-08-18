@@ -1,15 +1,24 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.users import Users
+from app.models.users import User
 from app.repositories.base import Repository
-from app.schemas.users import CreateUserSchema, UpdateUserSchema
+from app.schemas.users import UserAdminUpdate, UserCreate
 
 
-class UserRepository(Repository[Users, CreateUserSchema, UpdateUserSchema]):
-    async def get_by_email(self, session: AsyncSession, email: str) -> Users | None:
-        result = await session.execute(select(Users).where(Users.email == email))
+class UserRepository(Repository[User, UserCreate, UserAdminUpdate]):
+    async def get_by_email(self, session: AsyncSession, email: str) -> User | None:
+        result = await session.execute(select(User).where(User.email == email))
         return result.scalar_one_or_none()
 
+    async def list_page(
+        self, session: AsyncSession, *, offset: int, limit: int
+    ) -> tuple[list[User], int]:
+        users = await session.scalars(
+            select(User).order_by(User.id.asc()).offset(offset).limit(limit)
+        )
+        total = await session.scalar(select(func.count()).select_from(User))
+        return list(users.all()), total or 0
 
-user_repository = UserRepository(Users)
+
+user_repository = UserRepository(User)

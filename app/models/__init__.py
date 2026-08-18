@@ -1,1 +1,2 @@
-from .users import Users as Users
+from .users import User as User
+from .users import UserRole as UserRole
