@@ -41,6 +41,13 @@ class UserAdminUpdate(BaseModel):
         return str(value).casefold() if value is not None else None
 
 
+class PasswordChange(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    current_password: str
+    new_password: Annotated[str, Field(min_length=8, max_length=1024)]
+
+
 class UserPage(BaseModel):
     items: list[UserResponse]
     page: int
