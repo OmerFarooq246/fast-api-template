@@ -66,6 +66,12 @@ class UserLoginSchema(BaseModel):
         return str(value).casefold()
 
 
+class RefreshTokenRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    refresh_token: str
+
+
 class LoginSchema(BaseModel):
     access_token: str
     refresh_token: str

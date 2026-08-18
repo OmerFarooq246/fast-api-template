@@ -184,6 +184,4 @@ jobs:
         with:
           version: ${{ env.UV_VERSION }}
           enable-cache: true
-      # python-jose currently pulls in python-ecdsa, whose timing advisory has no fix.
-      # Remove this exception when the JWT implementation is replaced in Module 3.
-      - run: uv audit --locked --ignore-until-fixed GHSA-wj6h-64fc-37mp
+      - run: uv audit --locked

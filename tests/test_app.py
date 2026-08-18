@@ -10,9 +10,7 @@ def test_openapi_document_is_available(client: TestClient) -> None:
     assert response.status_code == 200
     document = response.json()
     assert document["info"]["title"] == "fast-api-template"
-    assert {"/auth/login", "/auth/referesh", "/users/", "/users/{user_id}"} <= set(
-        document["paths"]
-    )
+    assert {"/auth/login", "/auth/refresh", "/users/", "/users/{user_id}"} <= set(document["paths"])
 
 
 def test_application_factory_uses_injected_settings() -> None:

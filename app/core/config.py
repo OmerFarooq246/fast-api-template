@@ -1,6 +1,6 @@
 from enum import StrEnum
 from functools import lru_cache
-from typing import Self
+from typing import Literal, Self
 
 from pydantic import AnyHttpUrl, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -34,8 +34,11 @@ class Settings(BaseSettings):
 
     database_uri: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/fast_api_template"
     secret_key: SecretStr = SecretStr(DEVELOPMENT_SECRET)
-    algorithm: str = "HS256"
+    algorithm: Literal["HS256"] = "HS256"
+    jwt_issuer: str = "fast-api-template"
+    jwt_audience: str = "fast-api-template-api"
     access_token_expire_minutes: int = Field(default=30, gt=0)
+    refresh_token_expire_days: int = Field(default=30, gt=0)
 
     @field_validator("database_uri")
     @classmethod

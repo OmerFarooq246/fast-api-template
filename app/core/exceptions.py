@@ -23,6 +23,10 @@ class AuthenticationError(ApplicationError):
     code = "authentication_failed"
 
 
+class AuthorizationError(ApplicationError):
+    code = "authorization_failed"
+
+
 class PersistenceError(ApplicationError):
     code = "persistence_error"
 

@@ -62,9 +62,17 @@ class UserService:
         valid, updated_hash = verify_and_update_password(password, user.password)
         if not valid:
             raise AuthenticationError("Incorrect email or password")
+        if not user.is_active:
+            raise AuthenticationError("User account is inactive")
         if updated_hash is not None:
             user.password = updated_hash
             await session.flush()
+        return user
+
+    async def get_authenticated_user(self, session: AsyncSession, user_id: int) -> User:
+        user = await self.repository.get(session, user_id)
+        if user is None or not user.is_active:
+            raise AuthenticationError("Could not validate credentials")
         return user
 
     async def change_password(

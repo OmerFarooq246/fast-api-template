@@ -1,10 +1,9 @@
 from math import ceil
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Query, status
 from fastapi.responses import Response
 
-from app.api.dependencies import SessionDep
-from app.core.security import ensuer_super_admin
+from app.api.dependencies import SessionDep, SuperAdminDep
 from app.models.users import User
 from app.schemas.users import UserAdminUpdate, UserCreate, UserPage, UserResponse
 from app.services.user_service import user_service
@@ -30,7 +29,7 @@ async def create_user(
 async def get_user(
     user_id: int,
     db: SessionDep,
-    current_user: User = Depends(ensuer_super_admin),
+    current_user: SuperAdminDep,
 ) -> User:
     user = await user_service.get(db, user_id)
     return user
@@ -39,9 +38,9 @@ async def get_user(
 @router.get("/", response_model=UserPage, summary="List users")
 async def get_all_users(
     db: SessionDep,
+    current_user: SuperAdminDep,
     page: int = Query(default=1, ge=1),
     size: int = Query(default=20, ge=1, le=100),
-    current_user: User = Depends(ensuer_super_admin),
 ) -> UserPage:
     users, total = await user_service.list_page(db, page=page, size=size)
     return UserPage(
@@ -58,7 +57,7 @@ async def update_user(
     user_id: int,
     user_in: UserAdminUpdate,
     db: SessionDep,
-    current_user: User = Depends(ensuer_super_admin),
+    current_user: SuperAdminDep,
 ) -> User:
     updated_user = await user_service.update(db, user_id, user_in)
     return updated_user
@@ -70,7 +69,7 @@ async def update_user(
 async def delete_user(
     user_id: int,
     db: SessionDep,
-    current_user: User = Depends(ensuer_super_admin),
+    current_user: SuperAdminDep,
 ) -> Response:
     await user_service.delete(db, user_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
