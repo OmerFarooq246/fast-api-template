@@ -30,6 +30,7 @@ def test_unexpected_error_does_not_leak_details(app: FastAPI) -> None:
         response = client.get("/_test/unexpected")
 
     assert response.status_code == 500
+    assert response.headers["X-Request-ID"]
     assert response.json() == {
         "error": {
             "code": "internal_server_error",

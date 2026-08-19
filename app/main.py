@@ -10,9 +10,11 @@ from app.api.exception_handlers import (
     application_exception_handler,
     global_exception_handler,
 )
+from app.api.middleware import RequestContextMiddleware
 from app.api.router import router
 from app.core.config import Settings, get_settings
 from app.core.exceptions import ApplicationError
+from app.core.logging import configure_logging
 from app.db.database import create_db_engine, create_session_factory
 
 PUBLIC_DIRECTORY = Path(__file__).resolve().parent.parent / "public"
@@ -20,6 +22,7 @@ PUBLIC_DIRECTORY = Path(__file__).resolve().parent.parent / "public"
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     application_settings = settings or get_settings()
+    configure_logging(application_settings)
     database_engine = create_db_engine(
         application_settings.database_uri,
         echo=application_settings.debug,
@@ -48,6 +51,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    application.add_middleware(RequestContextMiddleware)
 
     application.add_exception_handler(Exception, global_exception_handler)
     application.add_exception_handler(ApplicationError, application_exception_handler)
