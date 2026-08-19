@@ -8,5 +8,5 @@ coverage.xml
 htmlcov/
 venv
 __pycache__
-versions
+app/alembic/versions/__pycache__/
 .DS_Store

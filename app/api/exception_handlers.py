@@ -6,7 +6,9 @@ from fastapi.responses import JSONResponse
 from app.core.exceptions import (
     ApplicationError,
     AuthenticationError,
+    AuthorizationError,
     PersistenceError,
+    RefreshTokenReuseError,
     ResourceConflictError,
     ResourceNotFoundError,
 )
@@ -17,6 +19,8 @@ ERROR_STATUS_CODES: dict[type[ApplicationError], int] = {
     ResourceNotFoundError: status.HTTP_404_NOT_FOUND,
     ResourceConflictError: status.HTTP_409_CONFLICT,
     AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+    RefreshTokenReuseError: status.HTTP_401_UNAUTHORIZED,
+    AuthorizationError: status.HTTP_403_FORBIDDEN,
     PersistenceError: status.HTTP_500_INTERNAL_SERVER_ERROR,
 }
 

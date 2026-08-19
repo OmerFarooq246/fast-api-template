@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, status
+from math import ceil
+
+from fastapi import APIRouter, Query, status
 from fastapi.responses import Response
 
-from app.api.dependencies import SessionDep
-from app.core.security import ensuer_super_admin
-from app.models.users import Users
-from app.schemas.users import CreateUserSchema, UpdateUserSchema, UserResponseSchema
+from app.api.dependencies import SessionDep, SuperAdminDep
+from app.models.users import User
+from app.schemas.users import UserAdminUpdate, UserCreate, UserPage, UserResponse
+from app.services.auth_service import auth_service
 from app.services.user_service import user_service
 
 router = APIRouter()
@@ -12,47 +14,55 @@ router = APIRouter()
 
 @router.post(
     "/",
-    response_model=UserResponseSchema,
+    response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Register new user",
 )
 async def create_user(
-    user_in: CreateUserSchema,
+    user_in: UserCreate,
     db: SessionDep,
-) -> Users:
+) -> User:
     user = await user_service.create(db, user_in)
     return user
 
 
-@router.get("/{user_id}", response_model=UserResponseSchema, summary="Get a new user against an id")
+@router.get("/{user_id}", response_model=UserResponse, summary="Get a user by id")
 async def get_user(
     user_id: int,
     db: SessionDep,
-    current_user: Users = Depends(ensuer_super_admin),
-) -> Users:
+    current_user: SuperAdminDep,
+) -> User:
     user = await user_service.get(db, user_id)
     return user
 
 
-@router.get("/", response_model=list[UserResponseSchema], summary="Get all users")
+@router.get("/", response_model=UserPage, summary="List users")
 async def get_all_users(
     db: SessionDep,
-    current_user: Users = Depends(ensuer_super_admin),
-) -> list[Users] | Response:
-    users = await user_service.list(db)
-    if not users:
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
-    return users
+    current_user: SuperAdminDep,
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=20, ge=1, le=100),
+) -> UserPage:
+    users, total = await user_service.list_page(db, page=page, size=size)
+    return UserPage(
+        items=[UserResponse.model_validate(user) for user in users],
+        page=page,
+        size=size,
+        total=total,
+        pages=ceil(total / size),
+    )
 
 
-@router.patch("/{user_id}", response_model=UserResponseSchema, summary="Edit a user against an id")
+@router.patch("/{user_id}", response_model=UserResponse, summary="Administratively update a user")
 async def update_user(
     user_id: int,
-    user_in: UpdateUserSchema,
+    user_in: UserAdminUpdate,
     db: SessionDep,
-    current_user: Users = Depends(ensuer_super_admin),
-) -> Users:
+    current_user: SuperAdminDep,
+) -> User:
     updated_user = await user_service.update(db, user_id, user_in)
+    if user_in.is_active is False:
+        await auth_service.logout_all(db, user=updated_user)
     return updated_user
 
 
@@ -62,7 +72,7 @@ async def update_user(
 async def delete_user(
     user_id: int,
     db: SessionDep,
-    current_user: Users = Depends(ensuer_super_admin),
+    current_user: SuperAdminDep,
 ) -> Response:
     await user_service.delete(db, user_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

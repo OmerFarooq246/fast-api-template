@@ -1,115 +1,146 @@
 from datetime import UTC, datetime, timedelta
-from typing import Any, cast
+from enum import StrEnum
+from uuid import uuid4
 
-from fastapi import Depends, HTTPException, Request
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
-from passlib.context import CryptContext
+import jwt
+from jwt import InvalidTokenError
+from pwdlib import PasswordHash
+from pwdlib.exceptions import UnknownHashError
+from pwdlib.hashers.argon2 import Argon2Hasher
+from pwdlib.hashers.bcrypt import BcryptHasher
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from app.core.config import Settings, get_settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+password_hash = PasswordHash((Argon2Hasher(), BcryptHasher()))
+
+
+class TokenType(StrEnum):
+    ACCESS = "access"
+    REFRESH = "refresh"
+
+
+class TokenClaims(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    sub: str
+    iss: str
+    aud: str
+    iat: datetime
+    exp: datetime
+    jti: str
+    token_type: TokenType
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return password_hash.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    valid, _ = verify_and_update_password(plain_password, hashed_password)
+    return valid
+
+
+def verify_and_update_password(
+    plain_password: str, hashed_password: str
+) -> tuple[bool, str | None]:
+    try:
+        return password_hash.verify_and_update(plain_password, hashed_password)
+    except UnknownHashError:
+        return False, None
+
+
+def create_token(
+    subject: int,
+    token_type: TokenType,
+    *,
+    settings: Settings | None = None,
+    expires_delta: timedelta | None = None,
+    jti: str | None = None,
+) -> str:
+    application_settings = settings or get_settings()
+    now = datetime.now(UTC)
+    default_lifetime = (
+        timedelta(minutes=application_settings.access_token_expire_minutes)
+        if token_type is TokenType.ACCESS
+        else timedelta(days=application_settings.refresh_token_expire_days)
+    )
+    payload = {
+        "sub": str(subject),
+        "iss": application_settings.jwt_issuer,
+        "aud": application_settings.jwt_audience,
+        "iat": now,
+        "exp": now + (expires_delta or default_lifetime),
+        "jti": jti or str(uuid4()),
+        "token_type": token_type.value,
+    }
+    return jwt.encode(
+        payload,
+        application_settings.secret_key.get_secret_value(),
+        algorithm=application_settings.algorithm,
+    )
 
 
 def create_access_token(
-    data: dict[str, Any],
-    expires_delta: timedelta | None = None,
+    subject: int,
+    *,
     settings: Settings | None = None,
+    expires_delta: timedelta | None = None,
 ) -> str:
-    application_settings = settings or get_settings()
-    to_encode = data.copy()
-    expire = datetime.now(UTC) + (
-        expires_delta or timedelta(minutes=application_settings.access_token_expire_minutes)
+    return create_token(
+        subject,
+        TokenType.ACCESS,
+        settings=settings,
+        expires_delta=expires_delta,
     )
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(
-        to_encode,
-        application_settings.secret_key.get_secret_value(),
-        algorithm=application_settings.algorithm,
-    )
-    return encoded_jwt
 
 
 def create_refresh_token(
-    data: dict[str, Any],
-    expires_delta: timedelta | None = None,
+    subject: int,
+    *,
     settings: Settings | None = None,
+    expires_delta: timedelta | None = None,
+    jti: str | None = None,
 ) -> str:
-    application_settings = settings or get_settings()
-    to_encode = data.copy()
-    expire = datetime.now(UTC) + (
-        expires_delta or timedelta(minutes=application_settings.access_token_expire_minutes)
+    return create_token(
+        subject,
+        TokenType.REFRESH,
+        settings=settings,
+        expires_delta=expires_delta,
+        jti=jti,
     )
-    to_encode.update({"exp": expire, "type": "refresh"})
-    encoded_jwt = jwt.encode(
-        to_encode,
-        application_settings.secret_key.get_secret_value(),
-        algorithm=application_settings.algorithm,
-    )
-    return encoded_jwt
 
 
-def decode_access_token(token: str, settings: Settings | None = None) -> dict[str, Any]:
+def decode_token(
+    token: str,
+    expected_type: TokenType,
+    *,
+    settings: Settings | None = None,
+) -> TokenClaims:
     application_settings = settings or get_settings()
-    return jwt.decode(
+    payload = jwt.decode(
         token,
         application_settings.secret_key.get_secret_value(),
         algorithms=[application_settings.algorithm],
+        audience=application_settings.jwt_audience,
+        issuer=application_settings.jwt_issuer,
+        options={
+            "require": ["sub", "iss", "aud", "iat", "exp", "jti", "token_type"],
+            "strict_aud": True,
+        },
     )
-
-
-bearer_scheme = HTTPBearer()
-
-
-async def get_current_user(
-    request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-) -> dict[str, Any]:
-    token = credentials.credentials
-    settings = cast(Settings, request.app.state.settings)
     try:
-        payload = decode_access_token(token, settings)
-        subject = payload.get("sub")
-        if not isinstance(subject, str):
-            raise HTTPException(
-                status_code=401,
-                detail="Could not validate credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-    except JWTError as exc:
-        raise HTTPException(
-            status_code=401,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from exc
-
-    print(f"payload: {payload}")
-    return payload
+        claims = TokenClaims.model_validate(payload)
+    except ValidationError as exc:
+        raise InvalidTokenError("Invalid token claims") from exc
+    if claims.token_type is not expected_type:
+        raise InvalidTokenError(f"Expected token type: {expected_type.value}")
+    return claims
 
 
-async def ensuer_super_admin(
-    current_user: dict[str, Any] = Depends(get_current_user),
-) -> dict[str, Any]:
-    role = current_user.get("role")
-    print(f"role: {role}")
-    if role != "SUPER_ADMIN":
-        raise HTTPException(status_code=403, detail="Access denied: Insufficient privileges.")
-    return current_user
+def decode_access_token(token: str, settings: Settings | None = None) -> TokenClaims:
+    return decode_token(token, TokenType.ACCESS, settings=settings)
 
 
-async def ensuer_admin(
-    current_user: dict[str, Any] = Depends(get_current_user),
-) -> dict[str, Any]:
-    role = current_user.get("role")
-    print(f"role: {role}")
-    if role != "ADMIN" and role != "SUPER_ADMIN":
-        raise HTTPException(status_code=403, detail="Access denied: Insufficient privileges.")
-    return current_user
+def decode_refresh_token(token: str, settings: Settings | None = None) -> TokenClaims:
+    return decode_token(token, TokenType.REFRESH, settings=settings)

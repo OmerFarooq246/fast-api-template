@@ -23,6 +23,14 @@ class AuthenticationError(ApplicationError):
     code = "authentication_failed"
 
 
+class RefreshTokenReuseError(AuthenticationError):
+    code = "refresh_token_reuse"
+
+
+class AuthorizationError(ApplicationError):
+    code = "authorization_failed"
+
+
 class PersistenceError(ApplicationError):
     code = "persistence_error"
 

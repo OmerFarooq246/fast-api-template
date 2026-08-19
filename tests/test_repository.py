@@ -2,18 +2,18 @@ from unittest.mock import AsyncMock
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.users import Users
+from app.models.users import User
 from app.repositories.user_repository import UserRepository
-from app.schemas.users import CreateUserSchema
+from app.schemas.users import UserCreate
 
 
 async def test_repository_flushes_without_committing() -> None:
     session = AsyncMock(spec=AsyncSession)
-    repository = UserRepository(Users)
+    repository = UserRepository(User)
 
     user = await repository.create(
         session,
-        CreateUserSchema(
+        UserCreate(
             email="user@example.com",
             password="hashed-password",  # noqa: S106
         ),
