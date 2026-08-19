@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     version: str = "v1"
     debug: bool = False
     cors_origins: list[AnyHttpUrl] = [AnyHttpUrl("http://localhost:3000")]
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    log_format: Literal["console", "json"] = "console"
+    readiness_timeout_seconds: float = Field(default=2.0, gt=0, le=30)
 
     database_uri: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/fast_api_template"
     secret_key: SecretStr = SecretStr(DEVELOPMENT_SECRET)

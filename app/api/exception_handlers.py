@@ -42,13 +42,19 @@ async def application_exception_handler(
 
 
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    request_id = getattr(request.state, "request_id", "unknown")
     logger.exception(
         "Unhandled application error",
-        extra={"method": request.method, "path": request.url.path},
+        extra={
+            "request_id": request_id,
+            "method": request.method,
+            "path": request.url.path,
+        },
         exc_info=exc,
     )
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        headers={"X-Request-ID": request_id},
         content={
             "error": {
                 "code": "internal_server_error",

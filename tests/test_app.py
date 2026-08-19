@@ -11,6 +11,8 @@ def test_openapi_document_is_available(client: TestClient) -> None:
     document = response.json()
     assert document["info"]["title"] == "fast-api-template"
     assert {
+        "/health/live",
+        "/health/ready",
         "/auth/change-password",
         "/auth/login",
         "/auth/logout",
