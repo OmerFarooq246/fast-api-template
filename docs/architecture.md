@@ -25,6 +25,14 @@ HTTP route -> service/use case -> repository -> SQLAlchemy -> PostgreSQL
   errors instead of HTTP exceptions.
 - **Repositories** contain persistence operations. They add, query, delete, and `flush()`
   entities but never commit or roll back.
+
+Every domain repository must extend `app.repositories.base.Repository`. Before adding a
+repository method, check whether the base repository already provides the operation. Reuse
+inherited operations such as retrieval, listing, pagination, creation, updates, and deletion
+instead of recreating them in a domain repository. Domain repositories should define only
+queries or persistence behavior that are specific to that domain. This does not apply to
+`RefreshSessionRepository`.
+
 - **Models** describe persistence state with SQLAlchemy 2 typed mappings.
 - **Schemas** define public request and response contracts with Pydantic.
 
