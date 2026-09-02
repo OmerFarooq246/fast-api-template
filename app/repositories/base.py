@@ -1,7 +1,8 @@
+import builtins
 from typing import Any
 
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import Base
@@ -34,6 +35,15 @@ class Repository[
     async def list(self, session: AsyncSession) -> list[ModelType]:
         result = await session.scalars(select(self.model).order_by(self.model.id.asc()))
         return list(result.all())
+
+    async def list_page(
+        self, session: AsyncSession, *, offset: int, limit: int
+    ) -> tuple[builtins.list[ModelType], int]:
+        objects = await session.scalars(
+            select(self.model).order_by(self.model.id.asc()).offset(offset).limit(limit)
+        )
+        total = await session.scalar(select(func.count()).select_from(self.model))
+        return list(objects.all()), total or 0
 
     async def create(
         self,
