@@ -1,15 +1,21 @@
-import os
 from collections.abc import AsyncIterator
 
 import pytest
 import pytest_asyncio
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 
 
+class IntegrationTestSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    test_database_uri: str | None = None
+
+
 @pytest_asyncio.fixture
 async def test_engine() -> AsyncIterator[AsyncEngine]:
-    database_uri = os.getenv("TEST_DATABASE_URI")
+    database_uri = IntegrationTestSettings().test_database_uri
     if database_uri is None:
         pytest.skip("TEST_DATABASE_URI is not configured")
 

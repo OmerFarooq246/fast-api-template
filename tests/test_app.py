@@ -1,15 +1,16 @@
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.core.config import Environment, Settings
 from app.main import create_app
 
 
-def test_openapi_document_is_available(client: TestClient) -> None:
+def test_openapi_document_is_available(client: TestClient, app: FastAPI) -> None:
     response = client.get("/openapi.json")
 
     assert response.status_code == 200
     document = response.json()
-    assert document["info"]["title"] == "fast-api-template"
+    assert document["info"]["title"] == app.state.settings.project_name
     assert {
         "/health/live",
         "/health/ready",
