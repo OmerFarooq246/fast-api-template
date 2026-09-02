@@ -3,6 +3,22 @@ default_install_hook_types:
   - pre-push
 
 repos:
+  - repo: local
+    hooks:
+      - id: prevent-main-push
+        name: prevent direct pushes to main
+        entry: python3 scripts/prevent_main_push.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: check-no-em-dash
+        name: check for em dashes
+        entry: python3 scripts/check_no_em_dash.py
+        language: system
+        stages: [pre-commit, pre-push]
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:

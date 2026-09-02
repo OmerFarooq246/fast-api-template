@@ -36,6 +36,7 @@ make check
 | `make lint` | Check formatting and lint rules without modifying files |
 | `make typecheck` | Run strict mypy checks |
 | `make test` | Run the complete pytest suite |
+| `make check` | Run text-policy, formatting, linting, type, and test checks |
 | `make coverage` | Run tests and generate terminal/XML coverage reports |
 | `uv run alembic upgrade head` | Apply all database migrations |
 | `uv run alembic check` | Detect model changes missing from migrations |

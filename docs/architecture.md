@@ -47,8 +47,8 @@ async def perform_use_case(session: AsyncSession) -> Result:
     return Result(first.id)
 ```
 
-Neither repository commits. For consumers outside HTTP—workers, CLI commands, and scheduled
-jobs—the caller must establish an equivalent `async with session.begin()` boundary. Avoid
+Neither repository commits. For consumers outside HTTP (workers, CLI commands, and scheduled
+jobs), the caller must establish an equivalent `async with session.begin()` boundary. Avoid
 nested, competing transaction owners. If a future use case needs multiple independently
 committed phases, give that use case an explicit unit-of-work boundary rather than adding
 commits to generic repository methods.
