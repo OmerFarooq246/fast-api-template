@@ -1,4 +1,5 @@
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, AsyncIterator
+from contextlib import asynccontextmanager
 from typing import cast
 
 from fastapi import Request
@@ -26,19 +27,25 @@ class Base(DeclarativeBase):
     id: Mapped[int] = mapped_column(primary_key=True)
 
 
-def create_db_engine(database_uri: str, *, echo: bool = False) -> AsyncEngine:
-    return create_async_engine(database_uri, echo=echo, pool_pre_ping=True)
+class Database:
+    def __init__(self, database_uri: str, *, echo: bool = False) -> None:
+        self.engine: AsyncEngine = create_async_engine(
+            database_uri,
+            echo=echo,
+            pool_pre_ping=True,
+        )
+        self.session_factory = async_sessionmaker(
+            bind=self.engine,
+            expire_on_commit=False,
+        )
 
-
-def create_session_factory(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
-    return async_sessionmaker(bind=engine, expire_on_commit=False)
-
-
-def get_session_factory(request: Request) -> async_sessionmaker[AsyncSession]:
-    return cast(async_sessionmaker[AsyncSession], request.app.state.db_session_factory)
+    @asynccontextmanager
+    async def session(self) -> AsyncIterator[AsyncSession]:
+        async with self.session_factory() as session, session.begin():
+            yield session
 
 
 async def get_db(request: Request) -> AsyncGenerator[AsyncSession]:
-    session_factory = get_session_factory(request)
-    async with session_factory() as session, session.begin():
+    database = cast(Database, request.app.state.database)
+    async with database.session() as session:
         yield session

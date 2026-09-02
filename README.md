@@ -40,21 +40,45 @@ make check
 | `uv run alembic upgrade head` | Apply all database migrations |
 | `uv run alembic check` | Detect model changes missing from migrations |
 
-Integration tests require `TEST_DATABASE_URI` to identify a dedicated PostgreSQL database
-whose name contains `test`:
+Integration tests read `TEST_DATABASE_URI` from the process environment first (including
+values set with `export` or by CI) and fall back to `.env`. The URI must identify a
+dedicated PostgreSQL database whose name contains `test`. Export it when applying
+migrations so Alembic can temporarily use the same database through `DATABASE_URI`:
 
 ```bash
+source .venv/bin/activate
 export TEST_DATABASE_URI=postgresql+asyncpg://postgres:postgres@localhost/fast_api_template_test
-DATABASE_URI="$TEST_DATABASE_URI" uv run alembic upgrade head
-uv run pytest -m integration
+DATABASE_URI="$TEST_DATABASE_URI" alembic upgrade head
+pytest -m integration
 ```
 
-Never point `TEST_DATABASE_URI` at a development, staging, or production database.
+Create and synchronize `.venv` with `uv sync --locked` first if it does not already exist.
+PostgreSQL must be running, and the test database must already exist before applying its
+migrations. Never point `TEST_DATABASE_URI` at a development, staging, or production
+database.
 
 ## Configuration
 
 Settings are read from environment variables and an optional `.env` file. See
 [`env.example`](env.example) for the complete list.
+
+### Environment modes
+
+`ENVIRONMENT` accepts `local`, `test`, `staging`, or `production`. It selects the
+configuration validation mode; it does not load a separate configuration profile or
+automatically change settings such as `DEBUG`, `DATABASE_URI`, `CORS_ORIGINS`, or
+`LOG_FORMAT`.
+
+| Value | Behavior |
+| --- | --- |
+| `local` | Default mode for local development. The development secret is accepted. |
+| `test` | Intended for automated tests. It has the same secret validation as `local`; selecting it does not automatically use `TEST_DATABASE_URI`. Unit tests inject their own settings, while PostgreSQL integration tests read `TEST_DATABASE_URI` from the process environment or `.env`. |
+| `staging` | Startup fails if `SECRET_KEY` is still the development default or contains fewer than 32 characters. |
+| `production` | Enforces the same strong-secret requirement as `staging`. Production-safe database credentials, CORS origins, logging, and JWT identifiers must still be configured explicitly. |
+
+In every mode, `DATABASE_URI` must use the `postgresql+asyncpg` driver and include a
+database name. Other settings retain their declared defaults unless overridden through the
+environment or `.env` file.
 
 Important production requirements:
 

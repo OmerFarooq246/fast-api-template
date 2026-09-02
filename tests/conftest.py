@@ -13,6 +13,7 @@ def app() -> FastAPI:
     return create_app(
         Settings(
             environment=Environment.TEST,
+            project_name="test-application",
             database_uri="postgresql+asyncpg://postgres:postgres@localhost/test_unused",
             secret_key="test-secret",  # noqa: S106
         )

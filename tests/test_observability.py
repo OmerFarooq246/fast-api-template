@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 from unittest.mock import AsyncMock
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import OperationalError
@@ -76,9 +77,12 @@ def test_liveness_does_not_require_the_database(client: TestClient) -> None:
     assert response.json() == {"status": "ok"}
 
 
-def test_readiness_succeeds_when_database_is_available(app: FastAPI) -> None:
+def test_readiness_succeeds_when_database_is_available(
+    app: FastAPI,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     engine = FakeEngine()
-    app.state.db_engine = engine
+    monkeypatch.setattr(app.state.database, "engine", engine)
 
     with TestClient(app) as client:
         response = client.get("/health/ready")
@@ -88,9 +92,12 @@ def test_readiness_succeeds_when_database_is_available(app: FastAPI) -> None:
     engine.connection.execute.assert_awaited_once()
 
 
-def test_readiness_is_unavailable_when_database_fails(app: FastAPI) -> None:
+def test_readiness_is_unavailable_when_database_fails(
+    app: FastAPI,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     error = OperationalError("SELECT 1", {}, RuntimeError("database unavailable"))
-    app.state.db_engine = FakeEngine(error)
+    monkeypatch.setattr(app.state.database, "engine", FakeEngine(error))
 
     with TestClient(app) as client:
         response = client.get("/health/ready")

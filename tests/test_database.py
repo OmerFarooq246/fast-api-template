@@ -1,3 +1,5 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from types import TracebackType
 from typing import Self
 
@@ -6,7 +8,7 @@ from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from starlette.requests import Request
 
-from app.db.database import get_db
+from app.db.database import Database, get_db
 
 
 class FakeTransaction:
@@ -53,17 +55,28 @@ class FakeSessionFactory:
         return FakeSession(self.events)
 
 
+class FakeDatabase:
+    def __init__(self, events: list[str]) -> None:
+        self.session_factory = FakeSessionFactory(events)
+
+    @asynccontextmanager
+    async def session(self) -> AsyncIterator[FakeSession]:
+        async with self.session_factory() as session, session.begin():
+            yield session
+
+
 def build_request(events: list[str]) -> Request:
     application = FastAPI()
-    application.state.db_session_factory = FakeSessionFactory(events)
+    application.state.database = FakeDatabase(events)
     return Request({"type": "http", "app": application})
 
 
 async def test_application_owns_typed_async_database_resources(app: FastAPI) -> None:
-    assert isinstance(app.state.db_engine, AsyncEngine)
-    assert isinstance(app.state.db_session_factory, async_sessionmaker)
+    assert isinstance(app.state.database, Database)
+    assert isinstance(app.state.database.engine, AsyncEngine)
+    assert isinstance(app.state.database.session_factory, async_sessionmaker)
 
-    session = app.state.db_session_factory()
+    session = app.state.database.session_factory()
     assert isinstance(session, AsyncSession)
     await session.close()
 

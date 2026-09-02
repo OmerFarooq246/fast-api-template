@@ -15,7 +15,7 @@ from app.api.router import router
 from app.core.config import Settings, get_settings
 from app.core.exceptions import ApplicationError
 from app.core.logging import configure_logging
-from app.db.database import create_db_engine, create_session_factory
+from app.db.database import Database
 
 PUBLIC_DIRECTORY = Path(__file__).resolve().parent.parent / "public"
 
@@ -23,16 +23,15 @@ PUBLIC_DIRECTORY = Path(__file__).resolve().parent.parent / "public"
 def create_app(settings: Settings | None = None) -> FastAPI:
     application_settings = settings or get_settings()
     configure_logging(application_settings)
-    database_engine = create_db_engine(
+    database = Database(
         application_settings.database_uri,
         echo=application_settings.debug,
     )
-    session_factory = create_session_factory(database_engine)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
-        await app.state.db_engine.dispose()
+        await app.state.database.engine.dispose()
 
     application = FastAPI(
         title=application_settings.project_name,
@@ -41,8 +40,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     application.state.settings = application_settings
-    application.state.db_engine = database_engine
-    application.state.db_session_factory = session_factory
+    application.state.database = database
 
     application.add_middleware(
         CORSMiddleware,
