@@ -58,6 +58,19 @@ PostgreSQL must be running, and the test database must already exist before appl
 migrations. Never point `TEST_DATABASE_URI` at a development, staging, or production
 database.
 
+## User pagination
+
+The super-admin endpoint `GET /users/` uses forward cursor pagination ordered by user ID.
+Request the first batch with `/users/?size=20`, then pass the returned `next_cursor` as
+`/users/?size=20&cursor=42` to continue. `size` defaults to 20 and accepts 1 through 100.
+The cursor is a positive integer user ID; results contain only IDs greater than the cursor.
+
+Responses contain `items`, `size`, and `next_cursor`. A null `next_cursor` means there are
+no more results. The former `page` parameter and `page`, `total`, and `pages` response
+fields have been removed. Clients should follow `next_cursor` until it is null.
+Deleting the user identified by a cursor does not prevent continuing. Results reflect
+the database at each request; pagination does not provide a snapshot across requests.
+
 ## Configuration
 
 Settings are read from environment variables and an optional `.env` file. See

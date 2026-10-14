@@ -36,6 +36,7 @@ def test_invalid_roles_are_rejected() -> None:
 
 
 def test_empty_user_page_is_a_valid_response() -> None:
-    page = UserPage(items=[], page=1, size=20, total=0, pages=0)
+    page = UserPage(items=[], size=20, next_cursor=None)
 
     assert page.items == []
+    assert page.next_cursor is None

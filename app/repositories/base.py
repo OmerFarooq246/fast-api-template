@@ -2,7 +2,7 @@ import builtins
 from typing import Any
 
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import Base
@@ -37,13 +37,18 @@ class Repository[
         return list(result.all())
 
     async def list_page(
-        self, session: AsyncSession, *, offset: int, limit: int
-    ) -> tuple[builtins.list[ModelType], int]:
-        objects = await session.scalars(
-            select(self.model).order_by(self.model.id.asc()).offset(offset).limit(limit)
-        )
-        total = await session.scalar(select(func.count()).select_from(self.model))
-        return list(objects.all()), total or 0
+        self, session: AsyncSession, *, cursor: int | None = None, limit: int
+    ) -> tuple[builtins.list[ModelType], int | None]:
+        if limit < 1:
+            raise ValueError("limit must be positive")
+        statement = select(self.model).order_by(self.model.id.asc()).limit(limit + 1)
+        if cursor is not None:
+            statement = statement.where(self.model.id > cursor)
+        result = await session.scalars(statement)
+        objects = list(result.all())
+        items = objects[:limit]
+        next_cursor = items[-1].id if len(objects) > limit else None
+        return items, next_cursor
 
     async def create(
         self,

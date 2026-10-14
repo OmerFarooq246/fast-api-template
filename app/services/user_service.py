@@ -23,9 +23,9 @@ class UserService:
         return user
 
     async def list_page(
-        self, session: AsyncSession, *, page: int, size: int
-    ) -> tuple[list[User], int]:
-        return await self.repository.list_page(session, offset=(page - 1) * size, limit=size)
+        self, session: AsyncSession, *, cursor: int | None = None, size: int
+    ) -> tuple[list[User], int | None]:
+        return await self.repository.list_page(session, cursor=cursor, limit=size)
 
     async def create(self, session: AsyncSession, data: UserCreate) -> User:
         if await self.repository.get_by_email(session, data.email) is not None:

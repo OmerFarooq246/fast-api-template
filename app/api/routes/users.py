@@ -1,5 +1,3 @@
-from math import ceil
-
 from fastapi import APIRouter, Query, status
 from fastapi.responses import Response
 
@@ -40,16 +38,14 @@ async def get_user(
 async def get_all_users(
     db: SessionDep,
     current_user: SuperAdminDep,
-    page: int = Query(default=1, ge=1),
+    cursor: int | None = Query(default=None, ge=1, le=2147483647),
     size: int = Query(default=20, ge=1, le=100),
 ) -> UserPage:
-    users, total = await user_service.list_page(db, page=page, size=size)
+    users, next_cursor = await user_service.list_page(db, cursor=cursor, size=size)
     return UserPage(
         items=[UserResponse.model_validate(user) for user in users],
-        page=page,
         size=size,
-        total=total,
-        pages=ceil(total / size),
+        next_cursor=next_cursor,
     )
 
 
