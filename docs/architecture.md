@@ -33,6 +33,10 @@ instead of recreating them in a domain repository. Domain repositories should de
 queries or persistence behavior that are specific to that domain. This does not apply to
 `RefreshSessionRepository`.
 
+The base repository's `list_page` uses forward keyset pagination ordered by primary-key
+ID. It selects IDs greater than an optional cursor and fetches one extra row to determine
+whether to return a next cursor. It does not use offsets or count the full table.
+
 - **Models** describe persistence state with SQLAlchemy 2 typed mappings.
 - **Schemas** define public request and response contracts with Pydantic.
 

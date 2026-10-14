@@ -12,6 +12,15 @@ PROTECTED_OPERATIONS = {
 }
 
 
+def test_users_documents_cursor_pagination(client: TestClient) -> None:
+    document: dict[str, Any] = client.get("/openapi.json").json()
+    parameters = document["paths"]["/users/"]["get"]["parameters"]
+
+    assert {parameter["name"] for parameter in parameters} == {"cursor", "size"}
+    properties = document["components"]["schemas"]["UserPage"]["properties"]
+    assert set(properties) == {"items", "size", "next_cursor"}
+
+
 def test_operation_ids_are_unique(client: TestClient) -> None:
     document: dict[str, Any] = client.get("/openapi.json").json()
     operation_ids = [

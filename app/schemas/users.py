@@ -50,10 +50,8 @@ class PasswordChange(BaseModel):
 
 class UserPage(BaseModel):
     items: list[UserResponse]
-    page: int
     size: int
-    total: int
-    pages: int
+    next_cursor: int | None
 
 
 class UserLoginSchema(BaseModel):
